@@ -41,10 +41,9 @@ for key, default in {
     if key not in st.session_state:
         st.session_state[key] = default
 
-# 컬럼 구성
 col1, col2, col3, col4 = st.columns([1, 6, 1, 6])
 
-# col1: 영어 변환
+# 영어 변환 버튼
 with col1:
     if st.button("영어 변환"):
         if st.session_state.code_input.strip() == "":
@@ -55,27 +54,26 @@ with col1:
             st.session_state.input_calls = []
             st.session_state.input_values = []
 
-# col2: 코드 입력
+# 코드 입력창
 with col2:
     st.session_state.code_input = st.text_area(
         "파이썬 코드 입력 (한글 또는 영어)",
         value=st.session_state.code_input,
-        height=400
+        height=400,
     )
 
 code = st.session_state.code_input
 input_calls = list(re.finditer(r'input\s*\(\s*["\']?.*?["\']?\s*\)', code))
 st.session_state.input_calls = input_calls
 
-# col3: 실행 버튼
+# 코드 실행 버튼
 with col3:
     if st.button("코드 실행"):
         if not input_calls:
             if "while True" in code:
-                # 무한 루프 감지 시 세션에 신호만 저장 (즉시 rerun하지 않음)
+                # 무한 루프 감지
                 st.session_state.result = "__INFINITE_LOOP__"
                 st.session_state.looping = True
-                # 무한 루프에서 출력할 문자열 찾기 (print 구문 중 마지막 인자)
                 prints = list(re.finditer(r'print\s*\(\s*["\'](.*?)["\']\s*\)', code))
                 st.session_state.loop_output = prints[-1].group(1) if prints else "(출력 없음)"
                 st.session_state.loop_index = 1
@@ -93,14 +91,14 @@ with col3:
         else:
             st.session_state.input_needed = True
 
-# col4: 실행 결과 / 입력
+# 입력값 처리 영역
 with col4:
     if st.session_state.input_needed and st.session_state.input_calls:
         st.write("👇 실행을 위해 입력값을 넣어주세요:")
         st.session_state.input_values = []
         for i, match in enumerate(st.session_state.input_calls):
-            value = st.text_input(f"입력값 #{i+1}", key=f"input_{i}")
-            st.session_state.input_values.append(value)
+            val = st.text_input(f"입력값 #{i+1}", key=f"input_{i}")
+            st.session_state.input_values.append(val)
 
         if st.button("입력값 적용 후 실행"):
             exec_code = code
@@ -136,7 +134,7 @@ with col4:
         st.success("✅ 실행 결과")
         st.code(st.session_state.result or "(출력 없음)", language="text", height=400)
 
-# 무한 루프 출력 & 반복 처리
+# 무한 루프 출력 및 제어
 if st.session_state.looping:
     stop = st.button("멈추기")
     output_area = st.empty()
@@ -153,7 +151,13 @@ if st.session_state.looping:
         st.session_state.loop_index = i + 1
         st.session_state.rerun_flag = True
 
-# 안전하게 rerun 호출: 버튼 클릭 같은 사용자 액션 이후에만
+# 안전한 rerun 호출: 무조건 맨 마지막에 한 번만 호출
 if st.session_state.rerun_flag:
     st.session_state.rerun_flag = False
-    st.experimental_rerun()
+    # rerun은 사용자 액션 직후에만 호출하는게 안전하므로
+    # 아래처럼 try-except로 감싸 에러시 무시하거나 로그를 남기도록 처리 가능
+    try:
+        st.experimental_rerun()
+    except Exception as e:
+        # 에러 무시 또는 로그 출력 (Streamlit 앱에선 보통 print로 로그 출력)
+        print(f"rerun 실패: {e}")
