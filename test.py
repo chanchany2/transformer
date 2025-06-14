@@ -100,13 +100,17 @@ with col4:
 
             # 무한 루프 감지
             if "while True" in exec_code:
-                prints = list(re.finditer(r'print\s*\(\s*["\'](.*?)["\']\s*\)', exec_code))
-                print_str = prints[-1].group(1) if prints else "(출력 없음)"
+                # input_values가 있으면 첫 번째 값을 출력값으로 사용
+                if st.session_state.input_values:
+                    print_str = st.session_state.input_values[0]
+                else:
+                    print_str = "(출력 없음)"
+
                 st.session_state.looping = True
                 st.session_state.loop_output = print_str
                 st.session_state.loop_index = 1
                 st.session_state.input_needed = False
-                st.rerun()
+                st.experimental_rerun()
             else:
                 output = io.StringIO()
                 try:
@@ -118,19 +122,19 @@ with col4:
                 except Exception as e:
                     st.error(f"오류 발생: {e}")
 
-    # 🔧 여기 수정됨: 안전한 방식으로 세션 상태 접근
+    # 안전하게 세션 상태 접근
     elif st.session_state.get("result", "") == "__INFINITE_LOOP__":
         st.warning("⚠️ 무한 루프가 감지되어 Streamlit 방식으로 실행됩니다.")
         st.session_state.looping = True
         st.session_state.loop_output = "출력 없음"
         st.session_state.loop_index = 1
-        st.rerun()
+        st.experimental_rerun()
 
     elif st.session_state.get("result") and not st.session_state.input_needed:
         st.success("✅ 실행 결과")
         st.code(st.session_state.result or "(출력 없음)", language="text", height=400)
 
-# ✅ 무한 루프 Streamlit 방식 출력
+# 무한 루프 Streamlit 방식 출력
 if st.session_state.get("looping", False):
     stop = st.button("멈추기")
     output_area = st.empty()
@@ -144,4 +148,4 @@ if st.session_state.get("looping", False):
         output_area.code(f"{st.session_state.loop_output} ({i})", language="text")
         time.sleep(1 / 3)
         st.session_state.loop_index = i + 1
-        st.rerun()
+        st.experimental_rerun()
