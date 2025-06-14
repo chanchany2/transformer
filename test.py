@@ -110,6 +110,7 @@ with col4:
                 st.session_state.loop_output = print_str
                 st.session_state.loop_index = 1
                 st.session_state.input_needed = False
+                st.stop()  # 추가
                 st.experimental_rerun()
             else:
                 output = io.StringIO()
@@ -122,12 +123,12 @@ with col4:
                 except Exception as e:
                     st.error(f"오류 발생: {e}")
 
-    # 안전하게 세션 상태 접근
     elif st.session_state.get("result", "") == "__INFINITE_LOOP__":
         st.warning("⚠️ 무한 루프가 감지되어 Streamlit 방식으로 실행됩니다.")
         st.session_state.looping = True
         st.session_state.loop_output = "출력 없음"
         st.session_state.loop_index = 1
+        st.stop()  # 추가
         st.experimental_rerun()
 
     elif st.session_state.get("result") and not st.session_state.input_needed:
@@ -148,4 +149,5 @@ if st.session_state.get("looping", False):
         output_area.code(f"{st.session_state.loop_output} ({i})", language="text")
         time.sleep(1 / 3)
         st.session_state.loop_index = i + 1
+        st.stop()  # 추가
         st.experimental_rerun()
