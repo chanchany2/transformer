@@ -46,7 +46,7 @@ col1, col2, col3, col4 = st.columns([1, 6, 1, 6])
 
 # col1: 영어 변환
 with col1:
-    if st.button("영어 변환"):
+    if st.button("영어 변환(gpt 쓰듯이 쓰면 돼!)"):
         if st.session_state.code_input.strip() == "":
             st.warning("한글 파이썬 코드를 먼저 입력해주세요.")
         else:
